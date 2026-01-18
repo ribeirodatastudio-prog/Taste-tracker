@@ -1,5 +1,18 @@
 import { z } from "zod"
 
+export enum ItemCategory {
+  STARTER = "STARTER",
+  MAIN = "MAIN",
+  DESSERT = "DESSERT",
+  DRINK = "DRINK",
+}
+
+export const menuItemSchema = z.object({
+  name: z.string().min(1, "Item name is required"),
+  category: z.nativeEnum(ItemCategory),
+  price: z.number().optional(),
+})
+
 export const visitSchema = z.object({
   restaurant: z.object({
     name: z.string().min(1, "Restaurant name is required"),
@@ -11,12 +24,10 @@ export const visitSchema = z.object({
   visit: z.object({
     date: z.date(),
     rating: z.number().min(1).max(5),
-    starters: z.string().optional(),
-    mainCourse: z.string().optional(),
-    desserts: z.string().optional(),
-    drinks: z.string().optional(),
+    menuItems: z.array(menuItemSchema).optional(),
     companions: z.array(z.string()).optional(),
   })
 })
 
+export type MenuItemValues = z.infer<typeof menuItemSchema>
 export type VisitFormValues = z.infer<typeof visitSchema>

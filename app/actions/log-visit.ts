@@ -29,20 +29,41 @@ export async function createVisit(data: VisitFormValues) {
             longitude: rData.longitude
         }
       })
-    } else {
-        // Optional: Update details if missing? Keeping it simple for now.
     }
 
+    // Handle Companions
+    // We get an array of strings (names). We need to find or create them.
+    const companionIds: number[] = []
+    if (vData.companions && vData.companions.length > 0) {
+        for (const name of vData.companions) {
+            let companion = await prisma.companion.findUnique({
+                where: { name }
+            })
+            if (!companion) {
+                companion = await prisma.companion.create({
+                    data: { name }
+                })
+            }
+            companionIds.push(companion.id)
+        }
+    }
+
+    // Create Visit
     await prisma.visit.create({
       data: {
         date: vData.date,
         rating: vData.rating,
-        starters: vData.starters,
-        mainCourse: vData.mainCourse,
-        desserts: vData.desserts,
-        drinks: vData.drinks,
-        companions: vData.companions ? JSON.stringify(vData.companions) : null,
-        restaurantId: restaurant.id
+        restaurantId: restaurant.id,
+        menuItems: {
+            create: vData.menuItems?.map(item => ({
+                name: item.name,
+                category: item.category,
+                price: item.price
+            })) || []
+        },
+        companions: {
+            connect: companionIds.map(id => ({ id }))
+        }
       }
     })
 
